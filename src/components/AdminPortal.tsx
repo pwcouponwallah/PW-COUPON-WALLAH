@@ -190,10 +190,21 @@ export default function AdminPortal({ onGoToStudent }: AdminPortalProps) {
       if (googleToken) url.searchParams.append("token", googleToken);
 
       const res = await apiFetch(url.toString());
+      
+      if (res.status === 403) {
+        await handleLogout();
+        setLoginError("Session expired or Unauthorized access. Please sign in again with the authorized Google account.");
+        return;
+      }
+      
       const data = await res.json();
-      setLeads(data);
-    } catch (err) {
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to fetch leads");
+      }
+      setLeads(Array.isArray(data) ? data : []);
+    } catch (err: any) {
       console.error("Failed to fetch leads", err);
+      setLeads([]);
     } finally {
       setLeadsLoading(false);
     }
@@ -205,6 +216,13 @@ export default function AdminPortal({ onGoToStudent }: AdminPortalProps) {
       const url = new URL("/api/analytics", window.location.origin);
       if (googleToken) url.searchParams.append("token", googleToken);
       const res = await apiFetch(url.toString());
+      
+      if (res.status === 403) {
+        await handleLogout();
+        setLoginError("Session expired or Unauthorized access. Please sign in again with the authorized Google account.");
+        return;
+      }
+      
       if (!res.ok) throw new Error("Failed to fetch analytics");
       const data = await res.json();
       setAnalytics(data);
@@ -220,6 +238,13 @@ export default function AdminPortal({ onGoToStudent }: AdminPortalProps) {
       const url = new URL("/api/logs", window.location.origin);
       if (googleToken) url.searchParams.append("token", googleToken);
       const res = await apiFetch(url.toString());
+      
+      if (res.status === 403) {
+        await handleLogout();
+        setLoginError("Session expired or Unauthorized access. Please sign in again with the authorized Google account.");
+        return;
+      }
+      
       if (!res.ok) throw new Error("Failed to fetch logs");
       const data = await res.json();
       setLogs(data);
