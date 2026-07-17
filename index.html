@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PW Coupon Wallah CRM</title>
+    <script>
+      (function() {
+        try {
+          var currentFetch = window.fetch || globalThis.fetch;
+          
+          function getFetch() {
+            return currentFetch;
+          }
+          
+          function setFetch(val) {
+            currentFetch = val;
+          }
+
+          var targets = [window, globalThis, Window.prototype];
+          if (typeof WindowProperties !== 'undefined') {
+            targets.push(WindowProperties);
+          }
+
+          targets.forEach(function(target) {
+            if (!target) return;
+            try {
+              Object.defineProperty(target, 'fetch', {
+                get: getFetch,
+                set: setFetch,
+                configurable: true,
+                enumerable: true
+              });
+            } catch (e) {
+              // Ignore failure for individual targets
+            }
+          });
+        } catch (err) {
+          console.warn('Failed to apply fetch getter/setter patch:', err);
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+

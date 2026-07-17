@@ -1,0 +1,6 @@
+{
+  "name": "PW Coupon Wallah CRM v2.0",
+  "description": "Secure, automated student assistance CRM portal for official PW Campus Ambassadors to handle coupon requests and tracking.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
