@@ -177,6 +177,15 @@ app.post("/api/gemini/recommend", async (req, res) => {
 // Helper to verify that the Google OAuth access token belongs specifically to pwcouponwallah@gmail.com
 async function verifyGoogleAdminToken(token: string | undefined): Promise<boolean> {
   if (!token) return false;
+  
+  // Also trust webhook requests coming from the configured Google Sheet script using the spreadsheetId as password
+  try {
+    const config = readConfig();
+    if (config.spreadsheetId && token === config.spreadsheetId) {
+      return true;
+    }
+  } catch (e) {}
+
   try {
     const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?access_token=${encodeURIComponent(token)}`);
     if (!response.ok) {
@@ -328,7 +337,7 @@ app.post(
         CreatedBy: "Student",
         CreatedAt: new Date().toISOString(),
         UpdatedAt: new Date().toISOString(),
-        LastEmail: "Request Received",
+        LastEmail: "",
         LastStatusChange: new Date().toISOString(),
         Remarks: remarks ? remarks.trim() : ""
       };
@@ -349,32 +358,6 @@ app.post(
         ];
         appendToGoogleSheet("LEADS", [row], config.googleAccessToken, config.spreadsheetId).catch(err => {
           console.error("Failed to write lead to sheets directly:", err);
-        });
-      }
-
-      // Trigger confirmation Transactional Email and Admin Notification via Gmail API or SMTP
-      const activeToken = config.googleAccessToken || "";
-      const hasEmailTransport = !!(process.env.SMTP_USER && process.env.SMTP_PASS) || !!activeToken;
-      if (hasEmailTransport) {
-        // 1. Send student confirmation email containing dynamic WhatsApp message & communities
-        EmailService.triggerStatusEmail(
-          newLead,
-          LeadStatus.NEW,
-          activeToken,
-          config.brandName
-        ).catch(err => {
-          console.error("Failed to send student confirmation email:", err);
-        });
-
-        // 2. Send admin alert of new lead
-        const adminEmail = config.adminEmail || "pwcouponwallah@gmail.com";
-        EmailService.triggerAdminNotification(
-          newLead,
-          activeToken,
-          adminEmail,
-          config.brandName
-        ).catch(err => {
-          console.error("Failed to send admin notification email:", err);
         });
       }
 
@@ -455,59 +438,6 @@ app.post("/api/leads/track", (req, res) => {
   }
 });
 
-// Helper function to process and retry sending any pending/failed emails
-async function processPendingEmails(token: string) {
-  try {
-    const db = readDB();
-    const config = readConfig();
-    const adminEmail = config.adminEmail || "pwcouponwallah@gmail.com";
-    
-    // Find leads from the last 7 days to avoid processing stale records
-    const recentLeads = db.leads.filter(lead => {
-      const ageMs = Date.now() - new Date(lead.CreatedAt).getTime();
-      return ageMs < 7 * 24 * 60 * 60 * 1000;
-    });
-
-    for (const lead of recentLeads) {
-      // 1. Check if student confirmation email was sent successfully
-      const studentEmailSent = db.emailLogs.some(log => 
-        log.Recipient === lead.Email && 
-        log.Subject.includes(lead.LeadID) && 
-        log.Status === "SUCCESS"
-      );
-
-      if (!studentEmailSent) {
-        console.log(`[processPendingEmails] Retrying student email for ${lead.LeadID}...`);
-        await EmailService.triggerStatusEmail(
-          lead,
-          lead.LeadStatus,
-          token,
-          config.brandName
-        );
-      }
-
-      // 2. Check if admin notification email was sent successfully
-      const adminEmailSent = db.emailLogs.some(log => 
-        log.Recipient === adminEmail && 
-        log.Subject.includes(lead.LeadID) && 
-        log.Status === "SUCCESS"
-      );
-
-      if (!adminEmailSent) {
-        console.log(`[processPendingEmails] Retrying admin notification for ${lead.LeadID}...`);
-        await EmailService.triggerAdminNotification(
-          lead,
-          token,
-          adminEmail,
-          config.brandName
-        );
-      }
-    }
-  } catch (err) {
-    console.error("[processPendingEmails] Error processing pending emails:", err);
-  }
-}
-
 // 6. ADMIN SIDE: RETRIEVE ALL LEADS
 app.get("/api/leads/list", async (req, res) => {
   const { status, exam, priority, search, token } = req.query;
@@ -516,13 +446,6 @@ app.get("/api/leads/list", async (req, res) => {
     const isAuthorized = await verifyGoogleAdminToken(token ? String(token) : undefined);
     if (!isAuthorized) {
       return res.status(403).json({ error: "Access Denied: Only pwcouponwallah@gmail.com is authorized to view leads." });
-    }
-
-    // Trigger background email queue processing on admin access
-    if (token) {
-      processPendingEmails(String(token)).catch(err => {
-        console.error("[leads/list] Failed to process pending emails:", err);
-      });
     }
 
     let leads: Lead[] = [];
@@ -702,20 +625,6 @@ app.post("/api/leads/update", async (req, res) => {
         Remarks: remarks || `Status transitioned to ${status}`
       };
       db.statusHistory.push(historyEntry);
-
-      // Trigger status-specific notification emails using the centralized EmailService
-      const activeToken = token || config.googleAccessToken || "";
-      const hasEmailTransport = !!(process.env.SMTP_USER && process.env.SMTP_PASS) || !!activeToken;
-      if (hasEmailTransport) {
-        EmailService.triggerStatusEmail(
-          updatedLead,
-          status as LeadStatus,
-          String(activeToken),
-          config.brandName
-        ).catch(err => {
-          console.error("Failed to send transition email via EmailService:", err);
-        });
-      }
     }
 
     db.leads[leadIndex] = updatedLead;
