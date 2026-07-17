@@ -509,7 +509,7 @@ export async function sendGmailEmail(to: string, subject: string, bodyHTML: stri
       "",
       bodyHTML
     ];
-    const message = messageParts.join("\n");
+    const message = messageParts.join("\r\n");
     const base64Safe = Buffer.from(message)
       .toString("base64")
       .replace(/\+/g, "-")

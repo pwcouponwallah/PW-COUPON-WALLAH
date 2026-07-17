@@ -1,9 +1,11 @@
 {
-  "projectId": "pw-coupon-wallah",
-  "appId": "1:469262489581:web:fccdb23116f31e5e3739e4",
-  "authDomain": "pw-coupon-wallah.firebaseapp.com",
-  "storageBucket": "pw-coupon-wallah.firebasestorage.app",
-  "messagingSenderId": "469262489581",
-  "measurementId": "G-1HNLG707W9",
-  "databaseURL": "https://pw-coupon-wallah-default-rtdb.asia-southeast1.firebasedatabase.app"
+  "projectId": "pacific-catbird-r6tp2",
+  "appId": "1:271538394818:web:0fbeb45d7425dd4b574d5b",
+  "apiKey": "AIzaSyCa6ZUPPGsQntOIUH9S67AKIPLgjS5aSUs",
+  "authDomain": "pacific-catbird-r6tp2.firebaseapp.com",
+  "storageBucket": "pacific-catbird-r6tp2.firebasestorage.app",
+  "messagingSenderId": "271538394818",
+  "measurementId": "",
+  "oAuthClientId": "271538394818-sljbfqjtkjlbemm0b8etioed3u3na1c6.apps.googleusercontent.com",
+  "recaptchaSiteKey": ""
 }

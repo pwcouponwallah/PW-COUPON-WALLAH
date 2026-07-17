@@ -534,40 +534,46 @@ export default function AdminPortal({ onGoToStudent }: AdminPortalProps) {
         
         {/* HEADER BAR */}
         <header className="bg-white border-b border-slate-200 h-16 px-4 sm:px-8 flex items-center justify-between sticky top-0 z-10 shrink-0">
-          <div className="flex items-center space-x-3 sm:space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4 min-w-0">
             <button
               onClick={() => setAdminMobileMenuOpen(true)}
-              className="lg:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-lg focus:outline-none"
+              className="lg:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-lg focus:outline-none shrink-0"
               aria-label="Toggle Sidebar"
             >
               <Menu className="w-5 h-5" />
             </button>
-            <h2 className="text-md font-extrabold text-slate-900 tracking-tight capitalize">{activeTab.toLowerCase()} Portal</h2>
+            <h2 className="text-sm sm:text-md font-extrabold text-slate-900 tracking-tight capitalize truncate max-w-[120px] sm:max-w-none">
+              {activeTab.toLowerCase()}
+            </h2>
             
             {/* Database status pill */}
-            <div className="flex items-center space-x-1.5 bg-slate-100 border border-slate-200 px-3 py-1 rounded-full text-[10px]">
+            <div 
+              className="flex items-center space-x-1.5 bg-slate-100 border border-slate-200 px-2 sm:px-3 py-1 rounded-full text-[9px] sm:text-[10px] shrink-0"
+              title={dbStatus?.sheetsConnected ? "Sheets Connected" : "Local Database Active"}
+            >
               <div className={`w-1.5 h-1.5 rounded-full ${dbStatus?.sheetsConnected ? "bg-emerald-500" : "bg-amber-500"}`} />
-              <span className="font-semibold text-slate-600 uppercase tracking-wider">
-                {dbStatus?.sheetsConnected ? "Sheets Connected" : "Local Database Active"}
+              <span className="font-semibold text-slate-600 uppercase tracking-wider hidden xs:inline">
+                {dbStatus?.sheetsConnected ? "Connected" : "Local Active"}
               </span>
             </div>
           </div>
 
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-1.5 sm:space-x-3 shrink-0">
             <button
               onClick={handleForceSync}
               disabled={syncLoading}
-              className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition-colors border border-slate-200 flex items-center space-x-1"
+              className="p-1.5 sm:p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition-colors border border-slate-200 flex items-center space-x-1"
               title="Force synchronize local Leads to Connected Sheet"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${syncLoading ? "animate-spin" : ""}`} />
-              <span className="text-[10px] font-bold uppercase tracking-wider px-1">Sync</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider px-1 hidden sm:inline">Sync</span>
             </button>
             <button
               onClick={onGoToStudent}
-              className="text-slate-600 hover:text-slate-900 bg-white border border-slate-200 hover:bg-slate-50 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors"
+              className="text-slate-600 hover:text-slate-900 bg-white border border-slate-200 hover:bg-slate-50 px-2.5 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold transition-colors whitespace-nowrap"
             >
-              Student Portal
+              <span className="sm:hidden">Student</span>
+              <span className="hidden sm:inline">Student Portal</span>
             </button>
           </div>
         </header>
@@ -580,7 +586,7 @@ export default function AdminPortal({ onGoToStudent }: AdminPortalProps) {
           </div>
         )}
 
-        <div className="p-8">
+        <div className="p-4 sm:p-8">
           
           {/* TAB 1: OVERVIEW DASHBOARD */}
           {activeTab === "DASHBOARD" && (
@@ -610,28 +616,28 @@ export default function AdminPortal({ onGoToStudent }: AdminPortalProps) {
               )}
 
               {/* KPI CARD GRID */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                 {[
                   { label: "Total Requests", value: analytics?.total ?? "...", icon: <Users className="w-5 h-5 text-blue-500" /> },
                   { label: "Pending Review", value: analytics?.pending ?? "...", icon: <Clock className="w-5 h-5 text-purple-500" /> },
                   { label: "OTP Waiting", value: analytics?.otpQueue ?? "...", icon: <AlertCircle className="w-5 h-5 text-amber-500 animate-pulse" /> },
                   { label: "Coupons Completed", value: analytics?.completed ?? "...", icon: <CheckCircle2 className="w-5 h-5 text-emerald-500" /> }
                 ].map((kpi, idx) => (
-                  <div key={idx} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex justify-between items-center">
-                    <div className="space-y-1">
-                      <p className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider">{kpi.label}</p>
-                      <p className="text-2xl font-black text-slate-950 font-mono">{kpi.value}</p>
+                  <div key={idx} className="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-sm flex justify-between items-center min-w-0">
+                    <div className="space-y-1 min-w-0">
+                      <p className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider truncate">{kpi.label}</p>
+                      <p className="text-xl sm:text-2xl font-black text-slate-950 font-mono truncate">{kpi.value}</p>
                     </div>
-                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">{kpi.icon}</div>
+                    <div className="bg-slate-50 p-2 sm:p-3 rounded-xl border border-slate-100 shrink-0 ml-2">{kpi.icon}</div>
                   </div>
                 ))}
               </div>
 
               {/* CHARTS CONTAINER */}
-              <div className="grid lg:grid-cols-12 gap-8">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8">
                 
                 {/* Recharts Bar: Exam cohort requests */}
-                <div className="lg:col-span-8 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                <div className="lg:col-span-8 bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
                   <div className="flex justify-between items-center border-b border-slate-100 pb-3">
                     <h3 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider">Exam Category Demands</h3>
                     <span className="text-[10px] text-slate-400 font-mono">Live Aggregated Metrics</span>
@@ -650,7 +656,7 @@ export default function AdminPortal({ onGoToStudent }: AdminPortalProps) {
                 </div>
 
                 {/* Turnaround Rate Gauge */}
-                <div className="lg:col-span-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4 flex flex-col justify-between">
+                <div className="lg:col-span-4 bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4 flex flex-col justify-between">
                   <div className="flex justify-between items-center border-b border-slate-100 pb-3">
                     <h3 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider">Turnaround Insights</h3>
                     <span className="text-[10px] bg-red-50 text-red-600 px-2 py-0.5 rounded-full font-bold">CRM</span>
@@ -672,7 +678,7 @@ export default function AdminPortal({ onGoToStudent }: AdminPortalProps) {
 
               {/* RECENT REQUESTS TABLE PREVIEW */}
               <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                <div className="p-4 sm:p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                   <h3 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider">Incoming Student Requests</h3>
                   <button onClick={() => setActiveTab("LEADS")} className="text-red-600 hover:text-red-700 text-xs font-bold flex items-center space-x-1">
                     <span>Manage all</span>
@@ -683,25 +689,25 @@ export default function AdminPortal({ onGoToStudent }: AdminPortalProps) {
                   <table className="min-w-full text-left text-xs text-slate-600">
                     <thead className="bg-slate-50 text-[10px] text-slate-500 uppercase font-mono border-b border-slate-200">
                       <tr>
-                        <th className="px-6 py-3">Lead ID</th>
-                        <th className="px-6 py-3">Student Name</th>
-                        <th className="px-6 py-3">Target Exam</th>
-                        <th className="px-6 py-3">Status</th>
-                        <th className="px-6 py-3">Registered Date</th>
+                        <th className="px-6 py-3 whitespace-nowrap">Lead ID</th>
+                        <th className="px-6 py-3 whitespace-nowrap">Student Name</th>
+                        <th className="px-6 py-3 whitespace-nowrap">Target Exam</th>
+                        <th className="px-6 py-3 whitespace-nowrap">Status</th>
+                        <th className="px-6 py-3 whitespace-nowrap">Registered Date</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {leads.slice(0, 5).map((l, idx) => (
                         <tr key={idx} className="hover:bg-slate-50">
-                          <td className="px-6 py-4 font-mono font-bold text-slate-900">{l.LeadID}</td>
-                          <td className="px-6 py-4 font-semibold text-slate-900">{l.Name}</td>
-                          <td className="px-6 py-4 font-mono text-slate-500">{l.Exam}</td>
-                          <td className="px-6 py-4">
+                          <td className="px-6 py-4 font-mono font-bold text-slate-900 whitespace-nowrap">{l.LeadID}</td>
+                          <td className="px-6 py-4 font-semibold text-slate-900 whitespace-nowrap">{l.Name}</td>
+                          <td className="px-6 py-4 font-mono text-slate-500 whitespace-nowrap">{l.Exam}</td>
+                          <td className="px-6 py-4 whitespace-nowrap">
                             <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${getStatusBadgeClass(l.LeadStatus)}`}>
                               {l.LeadStatus}
                             </span>
                           </td>
-                          <td className="px-6 py-4 text-slate-400">{new Date(l.CreatedAt).toLocaleDateString("en-IN")}</td>
+                          <td className="px-6 py-4 text-slate-400 whitespace-nowrap">{new Date(l.CreatedAt).toLocaleDateString("en-IN")}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -716,11 +722,11 @@ export default function AdminPortal({ onGoToStudent }: AdminPortalProps) {
             <div className="space-y-6">
               
               {/* FILTERS TOOLBAR */}
-              <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap gap-4 items-center justify-between">
-                <div className="flex flex-wrap gap-3 items-center">
+              <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between">
+                <div className="flex flex-col sm:flex-row flex-wrap gap-3 items-stretch sm:items-center w-full">
                   
                   {/* Search bar */}
-                  <div className="relative min-w-[240px]">
+                  <div className="relative w-full sm:min-w-[240px] sm:flex-1 max-w-md">
                     <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
                     <input
                       type="text"
@@ -736,7 +742,7 @@ export default function AdminPortal({ onGoToStudent }: AdminPortalProps) {
                   <select
                     value={filterStatus}
                     onChange={e => { setFilterStatus(e.target.value); setTimeout(fetchLeads, 100); }}
-                    className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none"
+                    className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none w-full sm:w-auto"
                   >
                     <option value="ALL">All Statuses</option>
                     <option value="NEW">New Requests</option>
@@ -751,7 +757,7 @@ export default function AdminPortal({ onGoToStudent }: AdminPortalProps) {
                   <select
                     value={filterExam}
                     onChange={e => { setFilterExam(e.target.value); setTimeout(fetchLeads, 100); }}
-                    className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none"
+                    className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none w-full sm:w-auto"
                   >
                     <option value="ALL">All Exams</option>
                     <option value="JEE">IIT JEE</option>
@@ -761,7 +767,7 @@ export default function AdminPortal({ onGoToStudent }: AdminPortalProps) {
 
                   <button
                     onClick={fetchLeads}
-                    className="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-xl text-xs font-bold transition-transform active:scale-95"
+                    className="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-xl text-xs font-bold transition-transform active:scale-95 w-full sm:w-auto"
                   >
                     Apply Filters
                   </button>
@@ -774,13 +780,13 @@ export default function AdminPortal({ onGoToStudent }: AdminPortalProps) {
                   <table className="min-w-full text-left text-xs text-slate-600">
                     <thead className="bg-slate-50 text-[10px] text-slate-500 uppercase font-mono border-b border-slate-200">
                       <tr>
-                        <th className="px-6 py-4">Request ID</th>
-                        <th className="px-6 py-4">Student Info</th>
-                        <th className="px-6 py-4">Target Exam / Batch</th>
-                        <th className="px-6 py-4">Credentials</th>
-                        <th className="px-6 py-4">Current Status</th>
-                        <th className="px-6 py-4">Last Updated</th>
-                        <th className="px-6 py-4 text-center">Action</th>
+                        <th className="px-6 py-4 whitespace-nowrap">Request ID</th>
+                        <th className="px-6 py-4 whitespace-nowrap">Student Info</th>
+                        <th className="px-6 py-4 whitespace-nowrap">Target Exam / Batch</th>
+                        <th className="px-6 py-4 whitespace-nowrap">Credentials</th>
+                        <th className="px-6 py-4 whitespace-nowrap">Current Status</th>
+                        <th className="px-6 py-4 whitespace-nowrap">Last Updated</th>
+                        <th className="px-6 py-4 text-center whitespace-nowrap">Action</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
@@ -800,29 +806,29 @@ export default function AdminPortal({ onGoToStudent }: AdminPortalProps) {
                       ) : (
                         leads.map((l, idx) => (
                           <tr key={idx} className="hover:bg-slate-50">
-                            <td className="px-6 py-4 font-mono font-bold text-slate-900">{l.LeadID}</td>
-                            <td className="px-6 py-4 space-y-1">
+                            <td className="px-6 py-4 font-mono font-bold text-slate-900 whitespace-nowrap">{l.LeadID}</td>
+                            <td className="px-6 py-4 space-y-1 whitespace-nowrap">
                               <p className="font-extrabold text-slate-950">{l.Name}</p>
                               <p className="text-slate-400 font-mono text-[10px]">{l.Phone} | {l.Email}</p>
                             </td>
-                            <td className="px-6 py-4 space-y-1">
+                            <td className="px-6 py-4 space-y-1 whitespace-nowrap">
                               <p className="font-bold text-slate-900">{l.Course}</p>
                               <p className="text-slate-400 text-[10px] font-mono">{l.Exam} | {l.Language}</p>
                             </td>
-                            <td className="px-6 py-4 space-y-1">
+                            <td className="px-6 py-4 space-y-1 whitespace-nowrap">
                               <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${l.ExistingPWUser ? "bg-red-50 text-red-600 border border-red-100" : "bg-blue-50 text-blue-600 border border-blue-100"}`}>
                                 {l.ExistingPWUser ? "Existing PW Account" : "New PW Account"}
                               </span>
                             </td>
-                            <td className="px-6 py-4">
+                            <td className="px-6 py-4 whitespace-nowrap">
                               <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold tracking-wide ${getStatusBadgeClass(l.LeadStatus)}`}>
                                 {l.LeadStatus}
                               </span>
                             </td>
-                            <td className="px-6 py-4 text-slate-400 font-mono">
+                            <td className="px-6 py-4 text-slate-400 font-mono whitespace-nowrap">
                               {new Date(l.UpdatedAt).toLocaleDateString("en-IN")}
                             </td>
-                            <td className="px-6 py-4 text-center">
+                            <td className="px-6 py-4 text-center whitespace-nowrap">
                               <button
                                 onClick={() => handleOpenLeadDrawer(l)}
                                 className="text-red-600 hover:text-red-700 text-xs font-bold bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-xl border border-red-200"
@@ -843,7 +849,7 @@ export default function AdminPortal({ onGoToStudent }: AdminPortalProps) {
           {/* TAB 3: KANBAN BOARD VIEW */}
           {activeTab === "KANBAN" && (
             <div className="space-y-6">
-              <div className="grid md:grid-cols-4 gap-6">
+              <div className="flex overflow-x-auto pb-4 gap-6 snap-x snap-mandatory md:grid md:grid-cols-4 lg:gap-6">
                 {[
                   { title: "New Requests", status: LeadStatus.NEW },
                   { title: "Under Review", status: LeadStatus.UNDER_REVIEW },
@@ -852,7 +858,7 @@ export default function AdminPortal({ onGoToStudent }: AdminPortalProps) {
                 ].map((column, cIdx) => {
                   const columnLeads = leads.filter(l => l.LeadStatus === column.status);
                   return (
-                    <div key={cIdx} className="bg-slate-100/60 p-4 rounded-2xl border border-slate-200/60 space-y-4">
+                    <div key={cIdx} className="bg-slate-100/60 p-4 rounded-2xl border border-slate-200/60 space-y-4 w-[280px] sm:w-[320px] shrink-0 snap-start md:w-auto">
                       <div className="flex justify-between items-center border-b border-slate-200 pb-2">
                         <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider">{column.title}</h4>
                         <span className="font-mono text-xs font-extrabold text-slate-500 bg-slate-200 px-2 py-0.5 rounded-md">
@@ -1074,24 +1080,32 @@ export default function AdminPortal({ onGoToStudent }: AdminPortalProps) {
 
       {/* LEAD DETAILED REVIEW DRAWER (SLIDING RIGHT SIDEBAR) */}
       {selectedLead && (
-        <div className="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-sm flex justify-end">
-          <div className="bg-white w-full max-w-lg h-full shadow-2xl p-8 overflow-y-auto space-y-6 relative flex flex-col justify-between">
+        <div 
+          className="fixed inset-0 z-50 bg-slate-950/40 backdrop-blur-sm flex justify-end"
+          onClick={() => setSelectedLead(null)}
+        >
+          <div 
+            className="bg-white w-full max-w-lg h-full shadow-2xl relative flex flex-col justify-between"
+            onClick={e => e.stopPropagation()}
+          >
             
-            <div className="space-y-6">
-              {/* Drawer Title */}
-              <div className="flex justify-between items-start border-b border-slate-100 pb-4">
-                <div>
-                  <span className="font-mono text-[10px] font-bold text-slate-400">{selectedLead.LeadID}</span>
-                  <h3 className="text-lg font-black text-slate-950">{selectedLead.Name}</h3>
-                </div>
-                <button
-                  onClick={() => setSelectedLead(null)}
-                  className="text-slate-400 hover:text-slate-900 font-extrabold text-lg px-2"
-                >
-                  ✕
-                </button>
+            {/* FIXED HEADER */}
+            <div className="p-6 border-b border-slate-100 flex justify-between items-start shrink-0 bg-slate-50/50">
+              <div>
+                <span className="font-mono text-[10px] font-bold text-slate-400">{selectedLead.LeadID}</span>
+                <h3 className="text-md sm:text-lg font-black text-slate-950 leading-tight">{selectedLead.Name}</h3>
               </div>
+              <button
+                onClick={() => setSelectedLead(null)}
+                className="text-slate-400 hover:text-slate-900 font-bold text-md sm:text-lg p-1.5 hover:bg-slate-100 rounded-lg transition-colors shrink-0 ml-4"
+              >
+                ✕
+              </button>
+            </div>
 
+            {/* SCROLLABLE BODY */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              
               {/* Student Academic & Contact Details */}
               <div className="grid grid-cols-2 gap-4 text-xs bg-slate-50 p-4 rounded-2xl border border-slate-200/60 leading-normal">
                 <div>
@@ -1208,7 +1222,8 @@ export default function AdminPortal({ onGoToStudent }: AdminPortalProps) {
               </div>
             </div>
 
-            <div className="flex space-x-3 border-t border-slate-100 pt-6">
+            {/* FIXED FOOTER */}
+            <div className="p-6 border-t border-slate-100 flex space-x-3 bg-slate-50/50 shrink-0">
               <button
                 onClick={() => setSelectedLead(null)}
                 className="w-1/3 border border-slate-200 hover:bg-slate-50 text-slate-700 py-3 rounded-xl text-xs font-bold transition-colors"
@@ -1217,7 +1232,7 @@ export default function AdminPortal({ onGoToStudent }: AdminPortalProps) {
               </button>
               <button
                 onClick={handleUpdateLead}
-                className="w-2/3 bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-transform active:scale-95 flex items-center justify-center space-x-2"
+                className="w-2/3 bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl text-xs font-bold uppercase tracking-wider transition-transform active:scale-95 flex items-center justify-center space-x-2 shadow-lg shadow-red-600/10"
               >
                 <Check className="w-4 h-4" />
                 <span>Save CRM Update</span>

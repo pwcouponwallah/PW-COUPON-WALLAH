@@ -185,7 +185,16 @@ async function verifyGoogleAdminToken(token: string | undefined): Promise<boolea
     }
     const data = await response.json();
     const email = data.email || data.user_email;
-    return !!(email && email.toLowerCase() === "pwcouponwallah@gmail.com");
+    const isAuthorized = !!(email && email.toLowerCase() === "pwcouponwallah@gmail.com");
+    if (isAuthorized) {
+      const config = readConfig();
+      if (config.googleAccessToken !== token) {
+        config.googleAccessToken = token;
+        writeConfig(config);
+        console.log("[verifyGoogleAdminToken] Automatically refreshed server googleAccessToken in config.");
+      }
+    }
+    return isAuthorized;
   } catch (err) {
     console.error("[verifyGoogleAdminToken] Error checking google access token:", err);
     return false;
@@ -536,7 +545,7 @@ app.post("/api/leads/update", async (req, res) => {
 
       // Trigger status-specific notification emails using the centralized EmailService
       const activeToken = token || config.googleAccessToken;
-      if (config.spreadsheetId && activeToken) {
+      if (activeToken) {
         EmailService.triggerStatusEmail(
           updatedLead,
           status as LeadStatus,
