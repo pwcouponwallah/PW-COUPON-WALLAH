@@ -3,8 +3,8 @@ import { motion } from "motion/react";
 import { LeadStatus } from "../types";
 import { apiFetch } from "../lib/apiClient";
 
-import pwHeroBanner from "../assets/images/pw_hero_banner_1784291217739.jpg";
-import pwFooterBanner from "../assets/images/pw_footer_banner_1784291234758.jpg";
+import pwHeroBanner from "../assets/images/20260717_175036_0000.png";
+import pwFooterBanner from "../assets/images/20260717_175237_0000.png";
 import { 
   ShieldCheck, 
   HelpCircle, 

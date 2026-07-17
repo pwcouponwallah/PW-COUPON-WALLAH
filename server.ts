@@ -430,6 +430,59 @@ app.post("/api/leads/track", (req, res) => {
   }
 });
 
+// Helper function to process and retry sending any pending/failed emails
+async function processPendingEmails(token: string) {
+  try {
+    const db = readDB();
+    const config = readConfig();
+    const adminEmail = config.adminEmail || "pwcouponwallah@gmail.com";
+    
+    // Find leads from the last 7 days to avoid processing stale records
+    const recentLeads = db.leads.filter(lead => {
+      const ageMs = Date.now() - new Date(lead.CreatedAt).getTime();
+      return ageMs < 7 * 24 * 60 * 60 * 1000;
+    });
+
+    for (const lead of recentLeads) {
+      // 1. Check if student confirmation email was sent successfully
+      const studentEmailSent = db.emailLogs.some(log => 
+        log.Recipient === lead.Email && 
+        log.Subject.includes(lead.LeadID) && 
+        log.Status === "SUCCESS"
+      );
+
+      if (!studentEmailSent) {
+        console.log(`[processPendingEmails] Retrying student email for ${lead.LeadID}...`);
+        await EmailService.triggerStatusEmail(
+          lead,
+          lead.LeadStatus,
+          token,
+          config.brandName
+        );
+      }
+
+      // 2. Check if admin notification email was sent successfully
+      const adminEmailSent = db.emailLogs.some(log => 
+        log.Recipient === adminEmail && 
+        log.Subject.includes(lead.LeadID) && 
+        log.Status === "SUCCESS"
+      );
+
+      if (!adminEmailSent) {
+        console.log(`[processPendingEmails] Retrying admin notification for ${lead.LeadID}...`);
+        await EmailService.triggerAdminNotification(
+          lead,
+          token,
+          adminEmail,
+          config.brandName
+        );
+      }
+    }
+  } catch (err) {
+    console.error("[processPendingEmails] Error processing pending emails:", err);
+  }
+}
+
 // 6. ADMIN SIDE: RETRIEVE ALL LEADS
 app.get("/api/leads/list", async (req, res) => {
   const { status, exam, priority, search, token } = req.query;
@@ -440,6 +493,13 @@ app.get("/api/leads/list", async (req, res) => {
       return res.status(403).json({ error: "Access Denied: Only pwcouponwallah@gmail.com is authorized to view leads." });
     }
 
+    // Trigger background email queue processing on admin access
+    if (token) {
+      processPendingEmails(String(token)).catch(err => {
+        console.error("[leads/list] Failed to process pending emails:", err);
+      });
+    }
+
     let leads: Lead[] = [];
     const config = readConfig();
 
@@ -447,16 +507,77 @@ app.get("/api/leads/list", async (req, res) => {
       try {
         // Sync or fetch from Google Sheets
         const sheetLeads = await fetchLeadsFromSheets(config.spreadsheetId, String(token));
+        
         if (sheetLeads && sheetLeads.length > 0) {
-          leads = sheetLeads;
-          // Save locally to keep in-sync
           const db = readDB();
-          db.leads = sheetLeads;
+          const sheetLeadsMap = new Map(sheetLeads.map(l => [l.LeadID, l]));
+          const mergedLeads: Lead[] = [];
+          const leadsToAppendToSheet: Lead[] = [];
+
+          // Process local database leads and merge updates
+          for (const localLead of db.leads) {
+            const sheetLead = sheetLeadsMap.get(localLead.LeadID);
+            if (sheetLead) {
+              const localTime = new Date(localLead.UpdatedAt).getTime();
+              const sheetTime = new Date(sheetLead.UpdatedAt).getTime();
+              if (localTime > sheetTime) {
+                // Local is newer: Keep local and wait for periodic or trigger-based sheets sync
+                mergedLeads.push(localLead);
+              } else {
+                // Sheet is newer or equal: Keep sheet lead
+                mergedLeads.push(sheetLead);
+              }
+            } else {
+              // Lead exists locally but not in Sheets yet (unsynced student request)
+              mergedLeads.push(localLead);
+              leadsToAppendToSheet.push(localLead);
+            }
+          }
+
+          // Process sheet leads that are not in local DB
+          const localLeadsMap = new Map(db.leads.map(l => [l.LeadID, l]));
+          for (const sheetLead of sheetLeads) {
+            if (!localLeadsMap.has(sheetLead.LeadID)) {
+              mergedLeads.push(sheetLead);
+            }
+          }
+
+          // Persist the merged leads back to local database
+          db.leads = mergedLeads;
           writeDB(db);
+          leads = mergedLeads;
+
+          // Automatically sync unsynced student leads back to Google Sheets in background
+          if (leadsToAppendToSheet.length > 0) {
+            const rowsToAppend = leadsToAppendToSheet.map(l => [
+              l.LeadID, l.RequestDate, l.Name, l.Phone, l.Email, l.Exam, l.Course,
+              l.TargetYear, l.Language, l.PurchaseTimeline, l.ExistingPWUser ? "TRUE" : "FALSE",
+              l.LeadStatus, l.Priority, l.OTPRequired ? "TRUE" : "FALSE", l.OTPReceived ? "TRUE" : "FALSE",
+              l.CouponGenerated, l.CouponDelivered ? "TRUE" : "FALSE", l.Completed ? "TRUE" : "FALSE",
+              l.CreatedBy, l.CreatedAt, l.UpdatedAt, l.LastEmail, l.LastStatusChange, l.Remarks
+            ]);
+            appendToGoogleSheet("LEADS", rowsToAppend, String(token), config.spreadsheetId).catch(err => {
+              console.error("[leads/list] Background append of unsynced leads to Google Sheets failed:", err);
+            });
+          }
         } else {
           // Fallback locally so we do not wipe out our local database on empty or slow sheets
           const db = readDB();
           leads = db.leads;
+
+          // If sheet is connected but empty, upload all local leads immediately
+          if (db.leads.length > 0) {
+            const rowsToSync = db.leads.map(l => [
+              l.LeadID, l.RequestDate, l.Name, l.Phone, l.Email, l.Exam, l.Course,
+              l.TargetYear, l.Language, l.PurchaseTimeline, l.ExistingPWUser ? "TRUE" : "FALSE",
+              l.LeadStatus, l.Priority, l.OTPRequired ? "TRUE" : "FALSE", l.OTPReceived ? "TRUE" : "FALSE",
+              l.CouponGenerated, l.CouponDelivered ? "TRUE" : "FALSE", l.Completed ? "TRUE" : "FALSE",
+              l.CreatedBy, l.CreatedAt, l.UpdatedAt, l.LastEmail, l.LastStatusChange, l.Remarks
+            ]);
+            appendToGoogleSheet("LEADS", rowsToSync, String(token), config.spreadsheetId).catch(err => {
+              console.error("[leads/list] Background upload of local database to empty sheet failed:", err);
+            });
+          }
         }
       } catch (sheetsErr) {
         console.error("[leads/list] Failed to fetch leads from Sheets. Using local database fallback:", sheetsErr);
