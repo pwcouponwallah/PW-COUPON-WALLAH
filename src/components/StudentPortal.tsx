@@ -2,6 +2,9 @@ import React, { useState } from "react";
 import { motion } from "motion/react";
 import { LeadStatus } from "../types";
 import { apiFetch } from "../lib/apiClient";
+
+import pwHeroBanner from "../assets/images/pw_hero_banner_1784291217739.jpg";
+import pwFooterBanner from "../assets/images/pw_footer_banner_1784291234758.jpg";
 import { 
   ShieldCheck, 
   HelpCircle, 
@@ -386,6 +389,21 @@ export default function StudentPortal({ onGoToAdmin }: StudentPortalProps) {
               </div>
             </div>
           </div>
+
+          {/* HORIZONTAL BANNER UNDER HERO GRID */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="mt-12 rounded-3xl overflow-hidden border border-slate-200 shadow-xl group hover:shadow-2xl transition-all duration-300 bg-white"
+          >
+            <img 
+              src={pwHeroBanner} 
+              alt="Physics Wallah Official Ambassador - Unlock up to Rs 5000 Off" 
+              className="w-full h-auto object-cover transform hover:scale-[1.01] transition-transform duration-500"
+              referrerPolicy="no-referrer"
+            />
+          </motion.div>
         </div>
       </section>
 
@@ -1134,6 +1152,88 @@ export default function StudentPortal({ onGoToAdmin }: StudentPortalProps) {
                 <p className="text-slate-600 text-xs leading-relaxed pl-6">{faq.a}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 11. AMBASSADOR PROMO BANNER SECTION (ABOVE FOOTER) */}
+      <section className="py-16 bg-gradient-to-br from-slate-900 via-slate-950 to-slate-900 text-white relative overflow-hidden">
+        {/* Decorative background gradients */}
+        <div className="absolute top-0 left-0 w-80 h-80 bg-red-600/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 right-0 w-80 h-80 bg-red-600/10 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+          <div className="grid md:grid-cols-12 gap-12 items-center">
+            {/* Promo Text Content */}
+            <div className="md:col-span-7 space-y-6">
+              <span className="inline-flex items-center space-x-2 bg-red-600/20 text-red-400 px-3.5 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider">
+                🎁 Exclusive Ambassador Offer
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-black tracking-tight leading-none">
+                Don't Buy Batches at Full Price! <br />
+                <span className="text-red-500">Get Up To ₹5000 Off</span> Instantly.
+              </h2>
+              <p className="text-slate-300 text-sm leading-relaxed max-w-xl">
+                Scan the QR code on the official poster or submit a request above. We ensure you get the absolute maximum discount mapped directly to your official register phone number.
+              </p>
+
+              {/* Bullet list of features */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-slate-300">
+                <div className="flex items-center space-x-2.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                  <span>100% Safe & Verified Process</span>
+                </div>
+                <div className="flex items-center space-x-2.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                  <span>Personalised Coupon Mapping</span>
+                </div>
+                <div className="flex items-center space-x-2.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                  <span>Instant Verification & OTP Process</span>
+                </div>
+                <div className="flex items-center space-x-2.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                  <span>Direct Addition to your PW Account</span>
+                </div>
+              </div>
+
+              {/* CTAs */}
+              <div className="flex flex-wrap gap-4 pt-2">
+                <button
+                  onClick={() => {
+                    setActiveTab("REQUEST");
+                    const el = document.getElementById("request");
+                    if (el) el.scrollIntoView({ behavior: "smooth" });
+                  }}
+                  className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-xl text-xs font-extrabold tracking-wider uppercase transition-transform active:scale-95"
+                >
+                  Request My Coupon Now
+                </button>
+                <button
+                  onClick={() => {
+                    const announcementBar = document.getElementById("announcement-bar");
+                    if (announcementBar) {
+                      announcementBar.scrollIntoView({ behavior: "smooth" });
+                    }
+                  }}
+                  className="bg-white/10 hover:bg-white/20 text-white border border-white/20 px-6 py-3 rounded-xl text-xs font-extrabold tracking-wider uppercase transition-transform active:scale-95 flex items-center space-x-2"
+                >
+                  <span>Back to Top</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Vertical Poster Column */}
+            <div className="md:col-span-5 flex justify-center">
+              <div className="relative w-full max-w-sm rounded-3xl overflow-hidden border border-white/10 shadow-2xl group hover:border-red-500/30 transition-all duration-300 bg-slate-900">
+                <img 
+                  src={pwFooterBanner} 
+                  alt="Physics Wallah Ambassador Poster" 
+                  className="w-full h-auto object-cover transform group-hover:scale-[1.01] transition-transform duration-500"
+                  referrerPolicy="no-referrer"
+                />
+              </div>
+            </div>
           </div>
         </div>
       </section>
