@@ -95,7 +95,7 @@ function buildEmailHTML(studentName: string, requestId: string, status: string, 
       </div>
       
       <div style="text-align: center; margin: 32px 0 20px 0;">
-        <a href="https://ais-dev-peqz4kg57pb7qntq5aofgb-178935493329.asia-southeast1.run.app" style="background-color: #dc2626; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 14px; display: inline-block;">Track Request Progress</a>
+        <a href="https://pw-coupon-wallah.vercel.app/" style="background-color: #dc2626; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 14px; display: inline-block;">Track Request Progress</a>
       </div>
       
       <div style="border-top: 1px solid #e2e8f0; padding-top: 16px; margin-top: 32px; font-size: 12px; color: #94a3b8; text-align: center;">
@@ -174,6 +174,24 @@ app.post("/api/gemini/recommend", async (req, res) => {
   }
 });
 
+// Helper to verify that the Google OAuth access token belongs specifically to pwcouponwallah@gmail.com
+async function verifyGoogleAdminToken(token: string | undefined): Promise<boolean> {
+  if (!token) return false;
+  try {
+    const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?access_token=${encodeURIComponent(token)}`);
+    if (!response.ok) {
+      console.warn(`[verifyGoogleAdminToken] Token info response not OK: ${response.status} ${response.statusText}`);
+      return false;
+    }
+    const data = await response.json();
+    const email = data.email || data.user_email;
+    return !!(email && email.toLowerCase() === "pwcouponwallah@gmail.com");
+  } catch (err) {
+    console.error("[verifyGoogleAdminToken] Error checking google access token:", err);
+    return false;
+  }
+}
+
 // 3. SECURE SHEET CONFIGURATION & AUTOMATED PROVISIONING
 app.post("/api/sheets/setup", async (req, res, next) => {
   const { token } = req.body;
@@ -182,6 +200,11 @@ app.post("/api/sheets/setup", async (req, res, next) => {
   }
 
   try {
+    const isAuthorized = await verifyGoogleAdminToken(token);
+    if (!isAuthorized) {
+      return res.status(403).json({ error: "Access Denied: Only pwcouponwallah@gmail.com is authorized to access admin features." });
+    }
+
     const spreadsheetId = await GoogleSheetService.setup(token);
     logAudit("Admin", "Google Sheets Database Automatically Provisioned", "SYSTEM", "Local Files", spreadsheetId, req);
     res.json({ success: true, spreadsheetId });
@@ -191,13 +214,18 @@ app.post("/api/sheets/setup", async (req, res, next) => {
 });
 
 // Save existing Spreadsheet ID manually
-app.post("/api/sheets/save", (req, res) => {
+app.post("/api/sheets/save", async (req, res) => {
   const { spreadsheetId, token } = req.body;
   if (!spreadsheetId) {
     return res.status(400).json({ error: "Spreadsheet ID is required" });
   }
 
   try {
+    const isAuthorized = await verifyGoogleAdminToken(token);
+    if (!isAuthorized) {
+      return res.status(403).json({ error: "Access Denied: Only pwcouponwallah@gmail.com is authorized to access admin features." });
+    }
+
     const config = readConfig();
     config.spreadsheetId = spreadsheetId;
     if (token) config.googleAccessToken = token;
@@ -398,6 +426,11 @@ app.get("/api/leads/list", async (req, res) => {
   const { status, exam, priority, search, token } = req.query;
 
   try {
+    const isAuthorized = await verifyGoogleAdminToken(token ? String(token) : undefined);
+    if (!isAuthorized) {
+      return res.status(403).json({ error: "Access Denied: Only pwcouponwallah@gmail.com is authorized to view leads." });
+    }
+
     let leads: Lead[] = [];
     const config = readConfig();
 
@@ -452,6 +485,11 @@ app.get("/api/leads/list", async (req, res) => {
 // 7. ADMIN SIDE: UPDATE LEAD STATUS / LOG TRANSITION
 app.post("/api/leads/update", async (req, res) => {
   const { leadId, status, priority, couponCode, remarks, otpReceived, otpRequired, couponDelivered, token } = req.body;
+
+  const isAuthorized = await verifyGoogleAdminToken(token);
+  if (!isAuthorized) {
+    return res.status(403).json({ error: "Access Denied: Only pwcouponwallah@gmail.com is authorized to update leads." });
+  }
 
   if (!leadId) {
     return res.status(400).json({ error: "Lead ID is required" });
@@ -529,7 +567,13 @@ app.post("/api/leads/update", async (req, res) => {
 });
 
 // 8. ADMIN SIDE: RETRIEVE ANALYTICS SUMMARY
-app.get("/api/analytics", (req, res) => {
+app.get("/api/analytics", async (req, res) => {
+  const token = req.query.token ? String(req.query.token) : undefined;
+  const isAuthorized = await verifyGoogleAdminToken(token);
+  if (!isAuthorized) {
+    return res.status(403).json({ error: "Access Denied: Only pwcouponwallah@gmail.com is authorized to view analytics." });
+  }
+
   try {
     const db = readDB();
     const leads = db.leads;
@@ -590,7 +634,13 @@ app.get("/api/analytics", (req, res) => {
 });
 
 // 9. ADMIN SIDE: SYSTEM LOGS (AUDIT, EMAIL, ERROR)
-app.get("/api/logs", (req, res) => {
+app.get("/api/logs", async (req, res) => {
+  const token = req.query.token ? String(req.query.token) : undefined;
+  const isAuthorized = await verifyGoogleAdminToken(token);
+  if (!isAuthorized) {
+    return res.status(403).json({ error: "Access Denied: Only pwcouponwallah@gmail.com is authorized to view system logs." });
+  }
+
   try {
     const db = readDB();
     res.json({
@@ -611,6 +661,11 @@ app.post("/api/sheets/sync", async (req, res) => {
   }
 
   try {
+    const isAuthorized = await verifyGoogleAdminToken(token);
+    if (!isAuthorized) {
+      return res.status(403).json({ error: "Access Denied: Only pwcouponwallah@gmail.com is authorized to sync database." });
+    }
+
     const config = readConfig();
     if (!config.spreadsheetId) {
       return res.status(400).json({ error: "No Google Sheet connected. Setup spreadsheet database first." });

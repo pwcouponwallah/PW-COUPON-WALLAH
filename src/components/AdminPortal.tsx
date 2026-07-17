@@ -102,7 +102,15 @@ export default function AdminPortal({ onGoToStudent }: AdminPortalProps) {
   // Initialize auth state
   useEffect(() => {
     initAuth(
-      (user: any, token: string) => {
+      async (user: any, token: string) => {
+        if (user && user.email?.toLowerCase() !== "pwcouponwallah@gmail.com") {
+          await logout();
+          setIsAdmin(false);
+          setAdminUser(null);
+          setGoogleToken(null);
+          setLoginError("Access Denied: Only pwcouponwallah@gmail.com is authorized to access this portal.");
+          return;
+        }
         setIsAdmin(true);
         setAdminUser(user);
         setGoogleToken(token);
@@ -137,6 +145,13 @@ export default function AdminPortal({ onGoToStudent }: AdminPortalProps) {
     try {
       const result = await googleSignIn();
       if (result) {
+        if (result.user.email?.toLowerCase() !== "pwcouponwallah@gmail.com") {
+          await logout();
+          setIsAdmin(false);
+          setAdminUser(null);
+          setGoogleToken(null);
+          throw new Error("Access Denied: Only pwcouponwallah@gmail.com is authorized to access this portal.");
+        }
         setIsAdmin(true);
         setAdminUser(result.user);
         setGoogleToken(result.accessToken);
@@ -187,7 +202,10 @@ export default function AdminPortal({ onGoToStudent }: AdminPortalProps) {
   const fetchAnalytics = async () => {
     setAnalyticsLoading(true);
     try {
-      const res = await apiFetch("/api/analytics");
+      const url = new URL("/api/analytics", window.location.origin);
+      if (googleToken) url.searchParams.append("token", googleToken);
+      const res = await apiFetch(url.toString());
+      if (!res.ok) throw new Error("Failed to fetch analytics");
       const data = await res.json();
       setAnalytics(data);
     } catch (err) {
@@ -199,7 +217,10 @@ export default function AdminPortal({ onGoToStudent }: AdminPortalProps) {
 
   const fetchLogs = async () => {
     try {
-      const res = await apiFetch("/api/logs");
+      const url = new URL("/api/logs", window.location.origin);
+      if (googleToken) url.searchParams.append("token", googleToken);
+      const res = await apiFetch(url.toString());
+      if (!res.ok) throw new Error("Failed to fetch logs");
       const data = await res.json();
       setLogs(data);
     } catch (err) {

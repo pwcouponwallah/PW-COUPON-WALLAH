@@ -75,7 +75,7 @@ Phone: ${lead.Phone}`;
       </div>
       
       <div style="text-align: center; margin: 36px 0 24px 0;">
-        <a href="https://ais-dev-peqz4kg57pb7qntq5aofgb-178935493329.asia-southeast1.run.app" style="background-color: #dc2626; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 14px; display: inline-block; transition: background-color 0.2s ease; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);">
+        <a href="https://pw-coupon-wallah.vercel.app/" style="background-color: #dc2626; color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 10px; font-weight: 700; font-size: 14px; display: inline-block; transition: background-color 0.2s ease; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);">
           Track Your Request Live
         </a>
       </div>
@@ -264,7 +264,7 @@ export class EmailService {
           </div>
           
           <div style="text-align: center; margin: 30px 0;">
-            <a href="https://ais-dev-peqz4kg57pb7qntq5aofgb-178935493329.asia-southeast1.run.app" style="background-color: #0f172a; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 13px; display: inline-block;">
+            <a href="https://pw-coupon-wallah.vercel.app/" style="background-color: #0f172a; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 13px; display: inline-block;">
               Open Ambassador CRM Dashboard
             </a>
           </div>

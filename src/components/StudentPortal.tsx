@@ -1139,20 +1139,70 @@ export default function StudentPortal({ onGoToAdmin }: StudentPortalProps) {
       </section>
 
       {/* FOOTER */}
-      <footer className="bg-slate-950 text-slate-400 py-12 border-t border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row justify-between items-center space-y-6 md:space-y-0">
-            <div className="flex items-center space-x-3">
-              <span className="bg-red-600 text-white w-8 h-8 rounded-lg flex items-center justify-center font-black text-md">PW</span>
-              <div>
-                <h4 className="font-extrabold text-white text-xs tracking-tight">PW Coupon Wallah</h4>
-                <p className="text-[9px] text-slate-500 font-mono uppercase leading-none">Official Ambassador Portal</p>
+      <footer className="bg-slate-950 text-slate-300 py-12 border-t border-slate-800 font-sans">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pb-8 border-b border-slate-800/80">
+            {/* Column 1: Brand & Role */}
+            <div className="space-y-4">
+              <div className="flex items-center space-x-3">
+                <span className="bg-red-600 text-white w-8 h-8 rounded-lg flex items-center justify-center font-black text-md">PW</span>
+                <div>
+                  <h4 className="font-extrabold text-white text-xs tracking-tight">PW Coupon Wallah</h4>
+                  <p className="text-[9px] text-slate-500 font-mono uppercase leading-none">Campus Ambassador Network</p>
+                </div>
+              </div>
+              <p className="text-xs text-slate-400 leading-relaxed max-w-sm">
+                Helping students unlock official maximum discounts and benefits on Physics Wallah batches. Submitted details are securely processed directly on the official dashboard.
+              </p>
+            </div>
+
+            {/* Column 2: Disclaimer */}
+            <div className="space-y-3">
+              <h5 className="text-white text-xs font-bold tracking-wide uppercase">Legal Disclaimer</h5>
+              <div className="p-3 bg-slate-900/40 border border-slate-800/60 rounded-xl">
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  <strong>Disclaimer:</strong> This portal is operated independently by an Authorized Physics Wallah (PW) Campus Ambassador. It is not owned, operated, or direct corporate customer support of Physics Wallah Pvt. Ltd. All product names, logos, brands, and trademarks are property of their respective owners.
+                </p>
               </div>
             </div>
 
-            <p className="text-[11px] text-slate-500 text-center md:text-right">
-              © 2026 PW Coupon Wallah. Not a replacement for the official PW application. Secure student assistance portal.
-            </p>
+            {/* Column 3: Active Student Communities */}
+            <div className="space-y-4">
+              <h5 className="text-white text-xs font-bold tracking-wide uppercase">Join Active Communities</h5>
+              <p className="text-xs text-slate-400">
+                Never miss an active coupon campaign, batch announcement, or preparation materials update.
+              </p>
+              <div className="flex flex-col sm:flex-row md:flex-col gap-2.5">
+                <a
+                  href="https://chat.whatsapp.com/L9gPNg40VhaH8UxbB3wTVq"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center space-x-2.5 bg-[#075e54]/20 hover:bg-[#075e54]/35 text-[#25d366] px-4 py-2 rounded-xl text-xs font-bold border border-[#075e54]/30 transition-colors"
+                >
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  <span>Join Official WhatsApp Group</span>
+                </a>
+                <a
+                  href="https://telegram.me/PW_Helping_Hand"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center space-x-2.5 bg-[#0088cc]/20 hover:bg-[#0088cc]/35 text-[#33a8e3] px-4 py-2 rounded-xl text-xs font-bold border border-[#0088cc]/30 transition-colors"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>Join Official Telegram Group</span>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row justify-between items-center text-[11px] text-slate-500 space-y-4 sm:space-y-0">
+            <p>© 2026 PW Coupon Wallah. Independent Authorized Campus Ambassador Service.</p>
+            <div className="flex space-x-4">
+              <a href="#home" className="hover:text-slate-300 transition-colors">Home</a>
+              <a href="#courses" className="hover:text-slate-300 transition-colors">Courses</a>
+              <a href="#request" className="hover:text-slate-300 transition-colors">Request Coupon</a>
+              <a href="#faq" className="hover:text-slate-300 transition-colors">FAQ Support</a>
+            </div>
           </div>
         </div>
       </footer>
