@@ -545,7 +545,7 @@ app.post("/api/leads/update", async (req, res) => {
 
       // Trigger status-specific notification emails using the centralized EmailService
       const activeToken = token || config.googleAccessToken;
-      if (activeToken) {
+      if (config.spreadsheetId && activeToken) {
         EmailService.triggerStatusEmail(
           updatedLead,
           status as LeadStatus,
