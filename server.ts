@@ -214,7 +214,9 @@ app.post("/api/sheets/setup", async (req, res, next) => {
       return res.status(403).json({ error: "Access Denied: Only pwcouponwallah@gmail.com is authorized to access admin features." });
     }
 
-    const spreadsheetId = await GoogleSheetService.setup(token);
+    const protocol = req.secure || req.headers["x-forwarded-proto"] === "https" ? "https" : "http";
+    const baseUrl = process.env.APP_URL || `${protocol}://${req.get("host")}`;
+    const spreadsheetId = await GoogleSheetService.setup(token, baseUrl);
     logAudit("Admin", "Google Sheets Database Automatically Provisioned", "SYSTEM", "Local Files", spreadsheetId, req);
     res.json({ success: true, spreadsheetId });
   } catch (err: any) {
@@ -249,6 +251,27 @@ app.post("/api/sheets/save", async (req, res) => {
     res.json({ success: true, spreadsheetId });
   } catch (err: any) {
     res.status(500).json({ error: "Failed to connect manual database", details: err.message });
+  }
+});
+
+// Disconnect manual Spreadsheet ID
+app.post("/api/sheets/disconnect", async (req, res) => {
+  const { token } = req.body;
+  try {
+    const isAuthorized = await verifyGoogleAdminToken(token);
+    if (!isAuthorized) {
+      return res.status(403).json({ error: "Access Denied: Only pwcouponwallah@gmail.com is authorized to disconnect spreadsheet database." });
+    }
+
+    const config = readConfig();
+    const oldId = config.spreadsheetId;
+    config.spreadsheetId = null;
+    writeConfig(config);
+
+    logAudit("Admin", "Google Sheets Database Disconnected", "SYSTEM", oldId || "None", "None", req);
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: "Failed to disconnect database", details: err.message });
   }
 });
 
@@ -329,13 +352,15 @@ app.post(
         });
       }
 
-      // Trigger confirmation Transactional Email and Admin Notification via Gmail API
-      if (config.googleAccessToken) {
+      // Trigger confirmation Transactional Email and Admin Notification via Gmail API or SMTP
+      const activeToken = config.googleAccessToken || "";
+      const hasEmailTransport = !!(process.env.SMTP_USER && process.env.SMTP_PASS) || !!activeToken;
+      if (hasEmailTransport) {
         // 1. Send student confirmation email containing dynamic WhatsApp message & communities
         EmailService.triggerStatusEmail(
           newLead,
           LeadStatus.NEW,
-          config.googleAccessToken,
+          activeToken,
           config.brandName
         ).catch(err => {
           console.error("Failed to send student confirmation email:", err);
@@ -345,7 +370,7 @@ app.post(
         const adminEmail = config.adminEmail || "pwcouponwallah@gmail.com";
         EmailService.triggerAdminNotification(
           newLead,
-          config.googleAccessToken,
+          activeToken,
           adminEmail,
           config.brandName
         ).catch(err => {
@@ -679,8 +704,9 @@ app.post("/api/leads/update", async (req, res) => {
       db.statusHistory.push(historyEntry);
 
       // Trigger status-specific notification emails using the centralized EmailService
-      const activeToken = token || config.googleAccessToken;
-      if (config.spreadsheetId && activeToken) {
+      const activeToken = token || config.googleAccessToken || "";
+      const hasEmailTransport = !!(process.env.SMTP_USER && process.env.SMTP_PASS) || !!activeToken;
+      if (hasEmailTransport) {
         EmailService.triggerStatusEmail(
           updatedLead,
           status as LeadStatus,

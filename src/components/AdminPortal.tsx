@@ -316,6 +316,34 @@ export default function AdminPortal({ onGoToStudent }: AdminPortalProps) {
     }
   };
 
+  // Disconnect manual sheet ID
+  const handleDisconnectSheets = async () => {
+    if (!window.confirm("Are you sure you want to disconnect this spreadsheet database? All local leads will remain intact, but live synchronization will be paused.")) {
+      return;
+    }
+    setSetupLoading(true);
+    try {
+      const res = await apiFetch("/api/sheets/disconnect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: googleToken })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        const errMsg = (data.error && typeof data.error === "object" ? data.error.message : data.error) || "Disconnect failed";
+        throw new Error(errMsg);
+      }
+      showToast("Spreadsheet disconnected successfully.");
+      setSpreadsheetIdInput("");
+      fetchHealth();
+      fetchLeads();
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setSetupLoading(false);
+    }
+  };
+
   // Force Sheets Synchronization
   const handleForceSync = async () => {
     if (!googleToken) {
@@ -1115,11 +1143,23 @@ export default function AdminPortal({ onGoToStudent }: AdminPortalProps) {
                       </button>
                     </div>
                   ) : (
-                    <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-xl space-y-2">
-                      <p className="text-xs text-emerald-800 font-bold">✓ CRM Spreadsheet Syncing Active</p>
-                      <p className="text-[11px] text-emerald-600 leading-normal">
-                        All incoming coupon requests, updates, notes history, and log trails are automatically written to Google Sheet Database ID: <strong className="font-mono text-slate-900">{dbStatus.spreadsheetId}</strong>.
-                      </p>
+                    <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-xl space-y-4">
+                      <div className="space-y-2">
+                        <p className="text-xs text-emerald-800 font-bold flex items-center space-x-1.5">
+                          <span>✓ CRM Spreadsheet Syncing Active</span>
+                        </p>
+                        <p className="text-[11px] text-emerald-600 leading-normal">
+                          All incoming coupon requests, updates, notes history, and log trails are automatically written to Google Sheet Database ID: <strong className="font-mono text-slate-950 block mt-1 break-all bg-emerald-100/50 p-2 rounded border border-emerald-200/50">{dbStatus.spreadsheetId}</strong>.
+                        </p>
+                      </div>
+                      <button
+                        onClick={handleDisconnectSheets}
+                        disabled={setupLoading}
+                        className="bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 disabled:opacity-50 py-2 px-3.5 rounded-xl text-[11px] font-extrabold uppercase tracking-wider transition-all inline-flex items-center space-x-1.5 cursor-pointer"
+                      >
+                        {setupLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <X className="w-3.5 h-3.5" />}
+                        <span>Disconnect & Use Another Sheet</span>
+                      </button>
                     </div>
                   )}
                 </div>

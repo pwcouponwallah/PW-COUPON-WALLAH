@@ -10,17 +10,18 @@ import {
 } from "../../server-db";
 
 /**
- * Apps Script code to install in Google Sheet for bidirectional webhook triggers.
+ * Generates Apps Script code to install in Google Sheet for bidirectional webhook triggers.
  * When the sheet is edited, this script posts updates back to the CRM API.
  */
-const APPS_SCRIPT_TRIGGER_CODE = `
-/**
+export function getAppsScriptTriggerCode(baseUrl: string): string {
+  const cleanUrl = baseUrl.replace(/\/$/, "");
+  return `/**
  * Apps Script trigger for PW Coupon Wallah CRM
  * Install this script under Extensions > Apps Script in your spreadsheet.
  * Set up an 'On Edit' or 'On Change' trigger pointing to the handleEdit function.
  */
 
-var CRM_API_URL = "https://ais-dev-peqz4kg57pb7qntq5aofgb-178935493329.asia-southeast1.run.app/api/leads/update";
+var CRM_API_URL = "${cleanUrl}/api/leads/update";
 
 function handleEdit(e) {
   var sheet = e.source.getActiveSheet();
@@ -68,19 +69,21 @@ function handleEdit(e) {
   }
 }
 `;
+}
 
 export class GoogleSheetService {
   /**
    * Automatically provisions a Google Spreadsheet with all required tabs,
    * configures headers, logs, settings, and populates the Apps Script trigger setup sheet.
    */
-  static async setup(token: string): Promise<string> {
+  static async setup(token: string, baseUrl?: string): Promise<string> {
     try {
       console.log("[GoogleSheetService] Starting automated spreadsheet setup...");
       const spreadsheetId = await createGoogleSpreadsheet(token);
 
       // Create instructional sheet for triggers
-      await this.createTriggerInstructionSheet(spreadsheetId, token);
+      const activeBaseUrl = baseUrl || "https://pw-coupon-wallah.vercel.app";
+      await this.createTriggerInstructionSheet(spreadsheetId, token, activeBaseUrl);
 
       console.log(`[GoogleSheetService] Setup successful. Spreadsheet ID: ${spreadsheetId}`);
       return spreadsheetId;
@@ -93,7 +96,7 @@ export class GoogleSheetService {
   /**
    * Helper to write Apps Script guide directly into spreadsheet for seamless admin setup
    */
-  private static async createTriggerInstructionSheet(spreadsheetId: string, token: string): Promise<void> {
+  private static async createTriggerInstructionSheet(spreadsheetId: string, token: string, baseUrl: string): Promise<void> {
     const sheetTitle = "APPS_SCRIPT_TRIGGER_GUIDE";
     
     try {
@@ -118,6 +121,7 @@ export class GoogleSheetService {
       });
 
       // Write instruction cells
+      const scriptCode = getAppsScriptTriggerCode(baseUrl);
       const instructions = [
         ["🚀 Bidirectional Synchronization Setup Instructions", ""],
         ["Step 1", "Open this Google Sheet, go to the top menu and select: 'Extensions' > 'Apps Script'."],
@@ -132,7 +136,7 @@ export class GoogleSheetService {
         ["Step 6", "Click Save. Grant the necessary permissions, and you are done! Live edits will sync back to the CRM."],
         ["", ""],
         ["📋 APPS SCRIPT SOURCE CODE TO COPY:", ""],
-        [APPS_SCRIPT_TRIGGER_CODE, ""]
+        [scriptCode, ""]
       ];
 
       await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${sheetTitle}!A1:B15?valueInputOption=USER_ENTERED`, {

@@ -1,5 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
+import nodemailer from "nodemailer";
 import { Lead, LeadStatus, Priority, StatusHistoryEntry, EmailLog, AuditLog, ErrorLog } from "./src/types";
 
 const DATA_DIR = path.join(process.cwd(), "data");
@@ -524,9 +525,68 @@ export async function fetchLeadsFromSheets(spreadsheetId: string, token: string)
   }
 }
 
-// Send Email via Gmail API (Transactional)
+// Send Email via Gmail API or SMTP (Transactional Hybrid)
 export async function sendGmailEmail(to: string, subject: string, bodyHTML: string, token: string) {
+  const smtpUser = process.env.SMTP_USER;
+  const smtpPass = process.env.SMTP_PASS;
+  const smtpHost = process.env.SMTP_HOST || "smtp.gmail.com";
+  const smtpPort = parseInt(process.env.SMTP_PORT || "587");
+
+  if (smtpUser && smtpPass) {
+    try {
+      console.log(`[Email] Sending email to ${to} via SMTP (${smtpHost}:${smtpPort})...`);
+      const transporter = nodemailer.createTransport({
+        host: smtpHost,
+        port: smtpPort,
+        secure: smtpPort === 465,
+        auth: {
+          user: smtpUser,
+          pass: smtpPass
+        }
+      });
+
+      await transporter.sendMail({
+        from: `"${process.env.SMTP_FROM_NAME || "PW Coupon Wallah"}" <${smtpUser}>`,
+        to,
+        subject,
+        html: bodyHTML
+      });
+
+      // Log success in email logs
+      const db = readDB();
+      db.emailLogs.push({
+        Recipient: to,
+        Subject: subject,
+        SentTime: new Date().toISOString(),
+        Status: "SUCCESS"
+      });
+      writeDB(db);
+      return;
+    } catch (smtpErr: any) {
+      console.error(`[Email] SMTP failed for ${to}:`, smtpErr);
+      logError("Email", "sendEmailSMTP", smtpErr);
+      
+      if (!token) {
+        // Log failure
+        const db = readDB();
+        db.emailLogs.push({
+          Recipient: to,
+          Subject: subject,
+          SentTime: new Date().toISOString(),
+          Status: "FAILED",
+          Error: `SMTP failed: ${smtpErr.message || smtpErr}`
+        });
+        writeDB(db);
+        throw smtpErr;
+      }
+      console.log("[Email] Falling back to Gmail API...");
+    }
+  }
+
   try {
+    if (!token) {
+      throw new Error("No Google Access Token is currently cached or provided. Configure SMTP credentials in .env for permanent offline delivery.");
+    }
     // Gmail API accepts RFC 2822 formatted base64url encoded message
     const utf8Subject = `=?utf-8?B?${Buffer.from(subject).toString("base64")}?=`;
     const messageParts = [
@@ -562,7 +622,7 @@ export async function sendGmailEmail(to: string, subject: string, bodyHTML: stri
       Status: "SUCCESS"
     });
     writeDB(db);
-  } catch (err) {
+  } catch (err: any) {
     logError("Email", "sendGmailEmail", err);
     // Log failure
     const db = readDB();
@@ -571,7 +631,7 @@ export async function sendGmailEmail(to: string, subject: string, bodyHTML: stri
       Subject: subject,
       SentTime: new Date().toISOString(),
       Status: "FAILED",
-      Error: String(err)
+      Error: String(err.message || err)
     });
     writeDB(db);
     throw err;
