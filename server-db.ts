@@ -352,7 +352,7 @@ async function writeHeaders(spreadsheetId: string, token: string) {
 export async function appendToGoogleSheet(sheetName: string, values: any[][], token: string, spreadsheetId: string) {
   try {
     await makeGoogleRequest(
-      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${sheetName}!A:A:append?valueInputOption=USER_ENTERED`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${sheetName}!A1:append?valueInputOption=USER_ENTERED`,
       {
         method: "POST",
         body: JSON.stringify({ values })
@@ -365,10 +365,32 @@ export async function appendToGoogleSheet(sheetName: string, values: any[][], to
   }
 }
 
+// Clear sheet values helper for precise over-writing syncs
+export async function clearGoogleSheet(spreadsheetId: string, range: string, token: string) {
+  try {
+    await makeGoogleRequest(
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}:clear`,
+      {
+        method: "POST"
+      },
+      token
+    );
+  } catch (err) {
+    console.warn(`[clearGoogleSheet] Failed to clear range ${range}:`, err);
+  }
+}
+
 // Push all local DB arrays to Google Sheets
 export async function syncToGoogleSheets(spreadsheetId: string, token: string) {
   try {
     const db = readDB();
+
+    // Clear existing data ranges to avoid residual lines when list size shrinks
+    await clearGoogleSheet(spreadsheetId, "LEADS!A2:X10000", token);
+    await clearGoogleSheet(spreadsheetId, "STATUS_HISTORY!A2:F10000", token);
+    await clearGoogleSheet(spreadsheetId, "EMAIL_LOGS!A2:E10000", token);
+    await clearGoogleSheet(spreadsheetId, "AUDIT_LOGS!A2:H10000", token);
+    await clearGoogleSheet(spreadsheetId, "ERROR_LOGS!A2:E10000", token);
 
     // Map Leads to array format matching schema headers
     const leadsRows = db.leads.map(l => [
@@ -453,6 +475,12 @@ export async function syncToGoogleSheets(spreadsheetId: string, token: string) {
   }
 }
 
+// Helper to safely parse cells into boolean values from sheets (handles true, "TRUE", "true", etc.)
+function parseSheetBool(val: any): boolean {
+  if (val === true || val === "true" || val === "TRUE") return true;
+  return false;
+}
+
 // Read entire leads table from Google Sheets
 export async function fetchLeadsFromSheets(spreadsheetId: string, token: string): Promise<Lead[]> {
   try {
@@ -475,14 +503,14 @@ export async function fetchLeadsFromSheets(spreadsheetId: string, token: string)
       TargetYear: row[7] || "",
       Language: row[8] || "",
       PurchaseTimeline: row[9] || "",
-      ExistingPWUser: row[10] === "TRUE",
+      ExistingPWUser: parseSheetBool(row[10]),
       LeadStatus: (row[11] as LeadStatus) || LeadStatus.NEW,
       Priority: (row[12] as Priority) || Priority.MEDIUM,
-      OTPRequired: row[13] === "TRUE",
-      OTPReceived: row[14] === "TRUE",
+      OTPRequired: parseSheetBool(row[13]),
+      OTPReceived: parseSheetBool(row[14]),
       CouponGenerated: row[15] || "",
-      CouponDelivered: row[16] === "TRUE",
-      Completed: row[17] === "TRUE",
+      CouponDelivered: parseSheetBool(row[16]),
+      Completed: parseSheetBool(row[17]),
       CreatedBy: row[18] || "",
       CreatedAt: row[19] || "",
       UpdatedAt: row[20] || "",

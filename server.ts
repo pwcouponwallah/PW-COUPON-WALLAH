@@ -444,12 +444,26 @@ app.get("/api/leads/list", async (req, res) => {
     const config = readConfig();
 
     if (config.spreadsheetId && token) {
-      // Sync or fetch from Google Sheets
-      leads = await fetchLeadsFromSheets(config.spreadsheetId, String(token));
-      // Save locally to keep in-sync
-      const db = readDB();
-      db.leads = leads;
-      writeDB(db);
+      try {
+        // Sync or fetch from Google Sheets
+        const sheetLeads = await fetchLeadsFromSheets(config.spreadsheetId, String(token));
+        if (sheetLeads && sheetLeads.length > 0) {
+          leads = sheetLeads;
+          // Save locally to keep in-sync
+          const db = readDB();
+          db.leads = sheetLeads;
+          writeDB(db);
+        } else {
+          // Fallback locally so we do not wipe out our local database on empty or slow sheets
+          const db = readDB();
+          leads = db.leads;
+        }
+      } catch (sheetsErr) {
+        console.error("[leads/list] Failed to fetch leads from Sheets. Using local database fallback:", sheetsErr);
+        logError("LeadsList", "fetchLeadsFromSheets", sheetsErr);
+        const db = readDB();
+        leads = db.leads;
+      }
     } else {
       // Fallback local
       const db = readDB();
@@ -563,7 +577,12 @@ app.post("/api/leads/update", async (req, res) => {
     // Save to Google Sheets if configured
     const activeToken = token || config.googleAccessToken;
     if (config.spreadsheetId && activeToken) {
-      await syncToGoogleSheets(config.spreadsheetId, String(activeToken));
+      try {
+        await syncToGoogleSheets(config.spreadsheetId, String(activeToken));
+      } catch (sheetsErr) {
+        console.error("[leads/update] Sheets synchronization failed, but lead saved locally:", sheetsErr);
+        logError("LeadsUpdate", "syncToGoogleSheets", sheetsErr);
+      }
     }
 
     logAudit("Admin", `Updated Lead ${leadId}`, leadId, oldStatus, status || oldLead.LeadStatus, req);

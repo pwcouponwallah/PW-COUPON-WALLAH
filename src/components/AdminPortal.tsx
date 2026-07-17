@@ -390,7 +390,7 @@ export default function AdminPortal({ onGoToStudent }: AdminPortalProps) {
     } catch (err: any) {
       alert(err.message);
     } finally {
-      setUpdateLoading(true);
+      setUpdateLoading(false);
     }
   };
 
@@ -580,7 +580,7 @@ export default function AdminPortal({ onGoToStudent }: AdminPortalProps) {
           </div>
         )}
 
-        <div className="p-8">
+        <div className="p-4 sm:p-8">
           
           {/* TAB 1: OVERVIEW DASHBOARD */}
           {activeTab === "DASHBOARD" && (
@@ -610,14 +610,14 @@ export default function AdminPortal({ onGoToStudent }: AdminPortalProps) {
               )}
 
               {/* KPI CARD GRID */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                 {[
                   { label: "Total Requests", value: analytics?.total ?? "...", icon: <Users className="w-5 h-5 text-blue-500" /> },
                   { label: "Pending Review", value: analytics?.pending ?? "...", icon: <Clock className="w-5 h-5 text-purple-500" /> },
                   { label: "OTP Waiting", value: analytics?.otpQueue ?? "...", icon: <AlertCircle className="w-5 h-5 text-amber-500 animate-pulse" /> },
                   { label: "Coupons Completed", value: analytics?.completed ?? "...", icon: <CheckCircle2 className="w-5 h-5 text-emerald-500" /> }
                 ].map((kpi, idx) => (
-                  <div key={idx} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex justify-between items-center">
+                  <div key={idx} className="bg-white p-4 sm:p-6 rounded-2xl border border-slate-200 shadow-sm flex justify-between items-center">
                     <div className="space-y-1">
                       <p className="text-[10px] text-slate-500 font-extrabold uppercase tracking-wider">{kpi.label}</p>
                       <p className="text-2xl font-black text-slate-950 font-mono">{kpi.value}</p>
@@ -679,7 +679,8 @@ export default function AdminPortal({ onGoToStudent }: AdminPortalProps) {
                     <ChevronRight className="w-4 h-4" />
                   </button>
                 </div>
-                <div className="overflow-x-auto min-w-full">
+                {/* Desktop and Tablet Table View */}
+                <div className="overflow-x-auto min-w-full hidden md:block">
                   <table className="min-w-full text-left text-xs text-slate-600">
                     <thead className="bg-slate-50 text-[10px] text-slate-500 uppercase font-mono border-b border-slate-200">
                       <tr>
@@ -706,6 +707,27 @@ export default function AdminPortal({ onGoToStudent }: AdminPortalProps) {
                       ))}
                     </tbody>
                   </table>
+                </div>
+
+                {/* Mobile Stacked Card View */}
+                <div className="md:hidden divide-y divide-slate-100">
+                  {leads.slice(0, 5).map((l, idx) => (
+                    <div key={idx} className="p-4 space-y-2">
+                      <div className="flex justify-between items-start">
+                        <span className="font-mono font-bold text-slate-900">{l.LeadID}</span>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${getStatusBadgeClass(l.LeadStatus)}`}>
+                          {l.LeadStatus}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="font-semibold text-slate-950">{l.Name}</span>
+                        <span className="text-slate-400">{new Date(l.CreatedAt).toLocaleDateString("en-IN")}</span>
+                      </div>
+                      <div className="text-[10px] text-slate-500 font-mono">
+                        {l.Exam}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -770,7 +792,8 @@ export default function AdminPortal({ onGoToStudent }: AdminPortalProps) {
 
               {/* MAIN LEADS DATA TABLE */}
               <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                <div className="overflow-x-auto min-w-full">
+                {/* Desktop and Tablet Table View */}
+                <div className="overflow-x-auto min-w-full hidden md:block">
                   <table className="min-w-full text-left text-xs text-slate-600">
                     <thead className="bg-slate-50 text-[10px] text-slate-500 uppercase font-mono border-b border-slate-200">
                       <tr>
@@ -835,6 +858,57 @@ export default function AdminPortal({ onGoToStudent }: AdminPortalProps) {
                       )}
                     </tbody>
                   </table>
+                </div>
+
+                {/* Mobile Stacked Card View */}
+                <div className="md:hidden divide-y divide-slate-100">
+                  {leadsLoading ? (
+                    <div className="text-center py-12 text-slate-400 font-medium space-y-2">
+                      <Loader2 className="w-6 h-6 animate-spin mx-auto text-red-600" />
+                      <span>Fetching secure database logs...</span>
+                    </div>
+                  ) : leads.length === 0 ? (
+                    <div className="text-center py-12 text-slate-400 font-medium">
+                      No student requests found matching filter parameters.
+                    </div>
+                  ) : (
+                    leads.map((l, idx) => (
+                      <div key={idx} className="p-4 space-y-3">
+                        <div className="flex justify-between items-start">
+                          <div className="space-y-0.5">
+                            <span className="font-mono font-bold text-slate-900 block">{l.LeadID}</span>
+                            <span className="text-slate-400 text-[10px]">{new Date(l.UpdatedAt).toLocaleDateString("en-IN")}</span>
+                          </div>
+                          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold tracking-wide ${getStatusBadgeClass(l.LeadStatus)}`}>
+                            {l.LeadStatus}
+                          </span>
+                        </div>
+
+                        <div className="space-y-1">
+                          <p className="font-extrabold text-slate-950 text-sm">{l.Name}</p>
+                          <p className="text-slate-400 text-xs font-mono">{l.Phone} | {l.Email}</p>
+                        </div>
+
+                        <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 space-y-1">
+                          <p className="font-bold text-slate-900 text-xs leading-normal">{l.Course}</p>
+                          <p className="text-slate-400 text-[10px] font-mono">{l.Exam} | {l.Language}</p>
+                        </div>
+
+                        <div className="flex items-center justify-between pt-1">
+                          <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${l.ExistingPWUser ? "bg-red-50 text-red-600 border border-red-100" : "bg-blue-50 text-blue-600 border border-blue-100"}`}>
+                            {l.ExistingPWUser ? "Existing PW" : "New PW"}
+                          </span>
+
+                          <button
+                            onClick={() => handleOpenLeadDrawer(l)}
+                            className="text-red-600 hover:text-red-700 text-xs font-bold bg-red-50 hover:bg-red-100 px-3.5 py-2 rounded-xl border border-red-200"
+                          >
+                            Review
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             </div>
