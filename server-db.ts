@@ -68,6 +68,32 @@ const defaultDB: LocalDB = {
       LastEmail: "OTP Action Required",
       LastStatusChange: "2026-07-16T14:35:00Z",
       Remarks: "Existing user, requires OTP coupon generation."
+    },
+    {
+      LeadID: "PW202607160003",
+      RequestDate: "2026-07-16T16:00:00Z",
+      Name: "Rohit Verma",
+      Phone: "7654321098",
+      Email: "rohit.verma@example.com",
+      Exam: "JEE",
+      Course: "Prayas JEE 2027",
+      TargetYear: "2027",
+      Language: "Hindi",
+      PurchaseTimeline: "Immediate",
+      ExistingPWUser: false,
+      LeadStatus: LeadStatus.COUPON_DELIVERED,
+      Priority: Priority.MEDIUM,
+      OTPRequired: false,
+      OTPReceived: false,
+      CouponGenerated: "PW-JEE-OFFER-77",
+      CouponDelivered: true,
+      Completed: true,
+      CreatedBy: "Admin",
+      CreatedAt: "2026-07-16T16:00:00Z",
+      UpdatedAt: "2026-07-16T16:15:00Z",
+      LastEmail: "COUPON_DELIVERED",
+      LastStatusChange: "2026-07-16T16:15:00Z",
+      Remarks: "Coupon code generated successfully and shared."
     }
   ],
   statusHistory: [
@@ -78,6 +104,14 @@ const defaultDB: LocalDB = {
       Time: "2026-07-16T14:35:00Z",
       UpdatedBy: "Admin",
       Remarks: "Need OTP to generate coupon on PW Dashboard."
+    },
+    {
+      LeadID: "PW202607160003",
+      OldStatus: "NEW",
+      NewStatus: "COUPON_DELIVERED",
+      Time: "2026-07-16T16:15:00Z",
+      UpdatedBy: "Admin",
+      Remarks: "Delivered code PW-JEE-OFFER-77"
     }
   ],
   emailLogs: [
@@ -96,6 +130,16 @@ const defaultDB: LocalDB = {
       RequestID: "PW202607160002",
       PreviousValue: "NEW",
       NewValue: "WAITING_STUDENT",
+      Browser: "Chrome",
+      IP: "127.0.0.1"
+    },
+    {
+      Timestamp: "2026-07-16T16:15:00Z",
+      User: "Admin",
+      Action: "Status Change to COUPON_DELIVERED",
+      RequestID: "PW202607160003",
+      PreviousValue: "NEW",
+      NewValue: "COUPON_DELIVERED",
       Browser: "Chrome",
       IP: "127.0.0.1"
     }

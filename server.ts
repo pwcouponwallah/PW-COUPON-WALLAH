@@ -21,7 +21,7 @@ import {
 import { Lead, LeadStatus, Priority, StatusHistoryEntry } from "./src/types";
 
 import { EmailService } from "./src/services/EmailService";
-import { GoogleSheetService } from "./src/services/GoogleSheetService";
+import { GoogleSheetService, getAppsScriptTriggerCode } from "./src/services/GoogleSheetService";
 import { ErrorHandler } from "./src/services/ErrorHandler";
 import { SecurityMiddleware } from "./src/services/SecurityMiddleware";
 
@@ -281,6 +281,26 @@ app.post("/api/sheets/disconnect", async (req, res) => {
     res.json({ success: true });
   } catch (err: any) {
     res.status(500).json({ error: "Failed to disconnect database", details: err.message });
+  }
+});
+
+// Retrieve generated Apps Script trigger code
+app.get("/api/sheets/script", async (req, res) => {
+  const token = req.query.token ? String(req.query.token) : undefined;
+  const isAuthorized = await verifyGoogleAdminToken(token);
+  if (!isAuthorized) {
+    return res.status(403).json({ error: "Access Denied: Only pwcouponwallah@gmail.com is authorized to view script source." });
+  }
+
+  try {
+    const config = readConfig();
+    const spreadsheetId = config.spreadsheetId || "YOUR_SPREADSHEET_ID";
+    const protocol = req.secure || req.headers["x-forwarded-proto"] === "https" ? "https" : "http";
+    const baseUrl = process.env.APP_URL || `${protocol}://${req.get("host")}`;
+    const scriptCode = getAppsScriptTriggerCode(baseUrl, spreadsheetId);
+    res.json({ scriptCode });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to generate script code" });
   }
 });
 
@@ -576,7 +596,7 @@ app.get("/api/leads/list", async (req, res) => {
 
 // 7. ADMIN SIDE: UPDATE LEAD STATUS / LOG TRANSITION
 app.post("/api/leads/update", async (req, res) => {
-  const { leadId, status, priority, couponCode, remarks, otpReceived, otpRequired, couponDelivered, token } = req.body;
+  const { leadId, status, priority, couponCode, remarks, otpReceived, otpRequired, couponDelivered, lastEmail, token } = req.body;
 
   const isAuthorized = await verifyGoogleAdminToken(token);
   if (!isAuthorized) {
@@ -610,6 +630,7 @@ app.post("/api/leads/update", async (req, res) => {
       OTPReceived: otpReceived !== undefined ? !!otpReceived : oldLead.OTPReceived,
       CouponDelivered: couponDelivered !== undefined ? !!couponDelivered : oldLead.CouponDelivered,
       Completed: status === LeadStatus.COMPLETED || status === LeadStatus.COUPON_DELIVERED ? true : oldLead.Completed,
+      LastEmail: lastEmail !== undefined ? lastEmail : oldLead.LastEmail,
       UpdatedAt: new Date().toISOString()
     };
 

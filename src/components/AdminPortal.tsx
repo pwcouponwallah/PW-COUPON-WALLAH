@@ -99,6 +99,11 @@ export default function AdminPortal({ onGoToStudent }: AdminPortalProps) {
   const [syncLoading, setSyncLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
 
+  // Apps Script states
+  const [appsScriptCode, setAppsScriptCode] = useState("");
+  const [scriptLoading, setScriptLoading] = useState(false);
+  const [copiedScript, setCopiedScript] = useState(false);
+
   // Initialize auth state
   useEffect(() => {
     initAuth(
@@ -129,6 +134,24 @@ export default function AdminPortal({ onGoToStudent }: AdminPortalProps) {
     );
   }, []);
 
+  const fetchAppsScriptCode = async () => {
+    if (!googleToken) return;
+    setScriptLoading(true);
+    try {
+      const url = new URL("/api/sheets/script", window.location.origin);
+      url.searchParams.append("token", googleToken);
+      const res = await apiFetch(url.toString());
+      if (res.ok) {
+        const data = await res.json();
+        setAppsScriptCode(data.scriptCode || "");
+      }
+    } catch (err) {
+      console.error("Failed to fetch Apps Script code", err);
+    } finally {
+      setScriptLoading(false);
+    }
+  };
+
   // Fetch leads and metrics whenever token or tab changes
   useEffect(() => {
     if (isAdmin) {
@@ -136,6 +159,9 @@ export default function AdminPortal({ onGoToStudent }: AdminPortalProps) {
       fetchAnalytics();
       fetchLogs();
       fetchHealth();
+      if (activeTab === "SETTINGS") {
+        fetchAppsScriptCode();
+      }
     }
   }, [isAdmin, activeTab, googleToken]);
 
@@ -1164,6 +1190,62 @@ export default function AdminPortal({ onGoToStudent }: AdminPortalProps) {
                   )}
                 </div>
               </div>
+
+              {/* GOOGLE APPS SCRIPT TRIGGERS & NOTIFICATIONS */}
+              {dbStatus?.spreadsheetId && (
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+                  <div className="border-b border-slate-100 pb-2 flex justify-between items-center">
+                    <h3 className="font-extrabold text-slate-900 text-xs uppercase tracking-wider">Apps Script Real-time Triggers</h3>
+                    <span className="text-[10px] bg-red-50 text-red-600 font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Professional Hybrid</span>
+                  </div>
+
+                  <div className="space-y-4 text-xs">
+                    <p className="text-slate-600 leading-relaxed">
+                      To enable <strong>instant transactional notifications (Email & webhook updates)</strong>, we utilize Google Apps Script executing securely inside your Spreadsheet. When a lead is updated on this dashboard or edited manually in the sheet, Apps Script dispatches emails to both the student and the admin automatically.
+                    </p>
+
+                    <div className="space-y-2 bg-slate-50 p-4 rounded-xl border border-slate-200/80 leading-normal">
+                      <h4 className="font-black text-slate-800 text-[11px] uppercase">⚡ Direct Trigger Setup Guide:</h4>
+                      <ol className="list-decimal pl-4 text-slate-600 space-y-2">
+                        <li>Inside your Google Sheet, click <strong>Extensions &gt; Apps Script</strong> in the top menu.</li>
+                        <li>Delete any placeholder code in the editor, and paste the generated script code below.</li>
+                        <li>Click the <strong>Save</strong> (floppy disk) icon.</li>
+                        <li>Go to <strong>Triggers</strong> (clock icon on the left menu) and click <strong>+ Add Trigger</strong> at the bottom-right corner.</li>
+                        <li>Set the trigger parameters exactly as:
+                          <ul className="list-disc pl-4 mt-1 space-y-1 font-medium">
+                            <li>Choose function to run: <span className="font-mono text-red-600">processPendingEmails</span></li>
+                            <li>Select event source: <span className="font-mono text-red-600">Time-driven</span></li>
+                            <li>Type of time-based trigger: <span className="font-mono text-red-600">Minutes timer</span></li>
+                            <li>Select minute interval: <span className="font-mono text-red-600">Every minute</span></li>
+                          </ul>
+                        </li>
+                        <li>Click <strong>Save</strong> and authorize the permissions. That's it! Real-time sync and emails will run automatically.</li>
+                      </ol>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between items-center">
+                        <label className="font-bold text-slate-700 uppercase text-[10px]">APPS SCRIPT SOURCE CODE</label>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(appsScriptCode);
+                            setCopiedScript(true);
+                            setTimeout(() => setCopiedScript(false), 2000);
+                          }}
+                          className="bg-slate-900 hover:bg-slate-800 text-white px-2.5 py-1 rounded text-[10px] font-bold uppercase flex items-center space-x-1"
+                        >
+                          {copiedScript ? "Copied ✓" : "Copy Code"}
+                        </button>
+                      </div>
+                      <textarea
+                        readOnly
+                        value={appsScriptCode || "Generating Apps Script code... Please wait."}
+                        className="w-full bg-slate-900 text-emerald-400 font-mono text-[10px] leading-relaxed p-4 h-64 rounded-xl border border-slate-950 resize-none outline-none focus:ring-1 focus:ring-red-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* HEALTH CONTROL CARD */}
               <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
